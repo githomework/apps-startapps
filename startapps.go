@@ -118,7 +118,7 @@ func ping(port string, expected_reply string) bool {
 
 func configServices() {
 	global.AppType.Setup()
-log.Println(global.Name, global.Folder)
+
 	if _, err := toml.DecodeFile(global.Folder+"/"+global.Name+".toml", &global.config); err != nil {
 		log.Printf("%s", err)
 		return
