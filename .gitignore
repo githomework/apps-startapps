@@ -4,6 +4,8 @@
 *.dll
 *.so
 *.dylib
+*.toml
+enc.go
 
 # Test binary, built with `go test -c`
 *.test
