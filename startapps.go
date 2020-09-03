@@ -8,15 +8,16 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"path/filepath"
+
 
 	"os/exec"
 	"runtime"
 	"strings"
 	"sync"
 	"time"
-
+"github.com/gitdlam/apps-app"
 	"github.com/BurntSushi/toml"
+
 	"github.com/kardianos/service"
 	"github.com/mitchellh/go-ps"
 )
@@ -76,9 +77,8 @@ type appType struct {
 }
 
 type globalType struct {
-	appName string
-	folder  string
-	config  tomlConfig
+	app.AppType
+	config tomlConfig
 	//	route_ports map[string]map[string]string
 	appMap map[string]*appType
 	logSrv service.Logger
@@ -117,12 +117,9 @@ func ping(port string, expected_reply string) bool {
 }
 
 func configServices() {
-	exe, _ := os.Executable()
-	global.folder = filepath.Dir(exe)
-	global.appName = filepath.Base(exe)
-	global.appName = global.appName[:len(global.appName)-4]
-
-	if _, err := toml.DecodeFile(global.folder+"/"+global.appName+".toml", &global.config); err != nil {
+	global.AppType.Setup()
+log.Println(global.Name, global.Folder)
+	if _, err := toml.DecodeFile(global.Folder+"/"+global.Name+".toml", &global.config); err != nil {
 		log.Printf("%s", err)
 		return
 	}
@@ -130,7 +127,7 @@ func configServices() {
 	global.appMap = map[string]*appType{}
 
 	for _, v := range global.config.Global {
-		if v.Exe == global.appName {
+		if v.Exe == global.Name {
 			global.config.ServePort = v.Port
 			global.config.PgCode = v.Pg_code
 			cred := strings.Split(DecryptString(v.User), "::")
@@ -143,7 +140,7 @@ func configServices() {
 	}
 
 	for _, v := range global.config.Apps {
-		if v.AutoRestart && v.Exe != global.appName {
+		if v.AutoRestart && v.Exe != global.Name {
 			global.appMap[v.Exe] = &appType{exe: strings.ToLower(v.Exe), args: v.Args, path: v.Folder + "/" + v.Exe, folder: v.Folder, runAsUser: v.RunAsUser}
 		}
 	}
@@ -171,7 +168,7 @@ func checkServices() int {
 				if app.runAsUser {
 					flds = append([]string{"-accepteula", "-u", "ce\\" + global.config.User, "-p", global.config.UserCode, "-h", "-i", app.path + ".exe"}, flds...)
 					//log.Println(flds)
-					cmd = exec.Command(global.folder+"/PsExec.exe", flds...)
+					cmd = exec.Command(global.Folder+"/PsExec.exe", flds...)
 					// environment not being passed on to app.  Suspect psexec isn't passing it on.
 					cmd.Env = append(os.Environ(), "spuser="+strings.ToLower(global.config.User)+"@winc.com.au", "sppass="+global.config.UserCode)
 				} else {
