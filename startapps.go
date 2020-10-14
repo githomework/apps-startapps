@@ -9,14 +9,14 @@ import (
 	"net/http"
 	"os"
 
-
 	"os/exec"
 	"runtime"
 	"strings"
 	"sync"
 	"time"
-"github.com/gitdlam/apps-app"
+
 	"github.com/BurntSushi/toml"
+	app "github.com/gitdlam/apps-app"
 
 	"github.com/kardianos/service"
 	"github.com/mitchellh/go-ps"
@@ -268,7 +268,7 @@ func currentProcesses() map[string]bool {
 		if exe[0] != 'g' {
 			continue
 		}
-		m[strings.Split(exe, ".exe")[0]] = true
+		m[strings.ToLower(strings.Split(exe, ".exe")[0])] = true
 	}
 	return m
 }
